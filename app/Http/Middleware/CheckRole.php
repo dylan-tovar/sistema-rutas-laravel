@@ -16,15 +16,20 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, string $role): Response
     {
-
         if (!Auth::check()) {
             return redirect()->route('login');
         }
-
-        if (! $request->user()->hasRole($role)) {
-            // Redirect...
-            return redirect()->route('dashboard')->with('error', 'No tienes permisos para acceder a esta página.');
+    
+        $user = $request->user();
+    
+        // Si el usuario no tiene el rol requerido, abortar o redirigir a una página genérica
+        if (!$user->hasRole($role)) {
+            abort(403, 'No tienes permisos para acceder a esta página.');
+            // Alternativamente:
+            // return redirect()->route('access.denied')->with('error', 'No tienes permisos para acceder a esta página.');
         }
+    
         return $next($request);
     }
+
 }

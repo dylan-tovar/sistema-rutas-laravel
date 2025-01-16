@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Role;
+use App\Models\Route;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class AdminDashboardController extends Controller
 {
@@ -151,6 +153,10 @@ class AdminDashboardController extends Controller
     public function routesview() {
 
         //
+        // $rutaspendientes = DB::table('routes')
+        //     ->leftJoin()
+
+
         return view('dashboard/admin/rutas/routelist', [
             'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
@@ -162,37 +168,149 @@ class AdminDashboardController extends Controller
 
     public function routesstore(Request $request) {
         
-        // depot
+        // depot (la ubicación inicial de la ruta)
         $depot = [
             'lat' => 10.500000,
             'lon' => -66.916664
         ];
-
-        $direcciones = $depot;
+    
+        // Inicializa las direcciones con el depot
+        $direcciones = [$depot];
         $idsPedidos = [];
-
-        // mysql> select u.id, u.name from users as u join role_user as rl on u.id = rl.user_id left join vehicles as v on u.id = v.user_id where rl.role_id = 3 and v.user_id is null;
+    
+        // Obtener los repartidores disponibles
         $repartidor = DB::table('users as u')
             ->join('role_user as rl', 'u.id', '=', 'rl.user_id')
             ->leftJoin('vehicles as v', 'u.id', '=', 'v.user_id')
             ->where('rl.role_id', 3)
             ->whereNull('v.user_id')
-            ->select('u,id', 'u.name')
+            ->select('u.id', 'u.name')
             ->get();
-
-
+    
+        
         if ($repartidor->isEmpty()) {
             return back()->withErrors(['error' => 'No hay repartidores disponibles.']);
         }
-
-        // automatico o manual
+    
+        // valid para el cálculo manual o automático
         if ($request->has('calcular_manual')) {
-            # code...
+            $orders = $request->input('orders', []); 
+            if (!is_array($orders)) {
+                return back()->withErrors(['error' => 'El formato de orders no es válido.']);
+            }
+    
+            
+            $pedidos = DB::table('orders as o')
+                ->join('addresses as a', 'o.address_id', '=', 'a.id') 
+                ->whereIn('o.id', $orders)
+                ->select('o.id', 'a.latitude', 'a.longitude') 
+                ->get();
         } else {
-            # code...
+            
+            $pedidos = DB::table('orders as o')
+                ->join('addresses as a', 'o.address_id', '=', 'a.id')
+                ->where('o.status', 'pending') 
+                ->select('o.id', 'a.latitude', 'a.longitude') 
+                ->get();
         }
+    
+        
+        foreach ($pedidos as $pedido) {
+            
+            if (!is_numeric($pedido->latitude) || !is_numeric($pedido->longitude)) {
+                return back()->withErrors(['error' => 'Una o más direcciones tienen coordenadas inválidas.']);
+            }
+    
+            
+            $direcciones[] = ['lat' => $pedido->latitude, 'lon' => $pedido->longitude];
+            $idsPedidos[] = $pedido->id;
+        }
+    
+        // LLamada a la API para optimizar la ruta
+        try {
+            $response = Http::post('http://127.0.0.1:5000/optimizar_ruta', [
+                'direcciones' => $direcciones,
+                'vehiculos_disponibles' => 1,
+            ])->json();
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Error al contactar con la API: ' . $e->getMessage()]);
+        }
+    
+        // Verificar si la API devolvió un error
+        if (isset($response['error'])) {
+            return back()->withErrors(['error' => $response['error']]);
+        }
+    
+        // Creación de ruta
+        $idRuta = DB::table('routes')->insertGetId([
+            'status' => 'active',
+            'distance' => $response['distancia_total'] ?? 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    
+        // Guardar las órdenes en la tabla route_orders
+        if (isset($response['rutas']) && is_array($response['rutas']) && isset($response['rutas'][0])) {
+            foreach ($response['rutas'][0] as $orden => $parada) {
+                $idPedido = $idsPedidos[$parada - 1] ?? null;
+    
+                if ($idPedido) {
+                    DB::table('route_orders')->insert([
+                        'route_id' => $idRuta,
+                        'order_id' => $idPedido,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            }
+        } else {
+            return back()->withErrors(['error' => 'La respuesta de la API no contiene rutas válidas.']);
+        }
+    
+        // Retornar con mensaje de éxito
+        return redirect()->route('admin.routes')->with('success', 'Ruta optimizada creada exitosamente');
     }
+    
 
+
+    // Mostrar todas las rutas o los detalles de una ruta específica
+    public function routesshow() {
+        
+
+            // Cargar todas las rutas activas
+            $routes = Route::with('driver')->where('status', 'active')->get();
+
+            return view('dashboard/admin/rutas/routelist', [
+                'routes' => $routes,
+                'breadcrumbs' => [
+                    ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+                    ['name' => 'Rutas', 'url' => null],
+                ],
+            ]);
+    }
+    
+
+    public function routesshowdetails ($idRuta) {
+
+        $route = Route::with(['driver', 'orders'])->find($idRuta);
+
+        if (!$route) {
+            return redirect()->route('admin.routes')->withErrors('Ruta no encontrada');
+        }
+    
+        // Recuperar las paradas (pedidos) asociadas con la ruta
+        $stops = $route->orders;
+    
+        return view('dashboard/admin/rutas/details', [
+            'route' => $route,
+            'stops' => $stops,
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+                ['name' => 'Rutas', 'url' => '/admin/dashboard/rutas'],
+                ['name' => 'Ruta ' . $idRuta, 'url' => null],
+            ],
+        ]);
+    }
 
 
 }

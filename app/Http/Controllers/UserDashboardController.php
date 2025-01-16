@@ -6,13 +6,15 @@ use App\Models\Address;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserDashboardController extends Controller
 {
     //
     public function myaddresses() {
 
-        $addresses = Address::all();
+        $user = Auth::user();
+        $addresses = Address::where('user_id', $user->id)->get();
 
         return view('dashboard/user/directions/mydirections', compact('addresses') ,[
             'breadcrumbs' => [
@@ -67,7 +69,12 @@ class UserDashboardController extends Controller
 
     //pedidos
     public function myorders() {
-        $orders = Order::with('user', 'address')->get();
+        
+        $user = Auth::user();
+        $orders = Order::with('user', 'address')
+                    ->where('user_id', $user->id)
+                    ->get();
+
         return view('dashboard/user/orders/myorders', compact('orders'), [
            'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => '/dashboard'],
@@ -78,9 +85,11 @@ class UserDashboardController extends Controller
     }
 
     public function createorder() {
-        $users = User::all(); // Usuarios disponibles
-        $addresses = Address::all(); // Direcciones disponibles
-        return view('dashboard/user/orders/neworder', compact('users', 'addresses'), [
+        // $users = User::all(); // Usuarios disponibles
+        // $addresses = Address::all(); // Direcciones disponibles
+        $user = Auth::user();
+        $addresses = Address::where('user_id', $user->id)->get();
+        return view('dashboard/user/orders/neworder', compact('user', 'addresses'), [
             'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => '/dashboard'],
                 ['name' => 'Pedidos', 'url' => null],

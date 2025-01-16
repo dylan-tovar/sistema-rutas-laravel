@@ -17,8 +17,8 @@ Route::get('/', function () {
 Route::get('/register', [RegisterController::class, 'show'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
 
-Route::get('/login', [LoginController::class, 'show'])->name('login')->middleware('guest');
-Route::post('/login', [LoginController::class, 'login'])->middleware('guest');
+Route::get('/login', [LoginController::class, 'show'])->name('login');
+Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // dashboard
@@ -41,12 +41,15 @@ Route::middleware('auth', 'role:admin')->group(function () {
 
     //rutas
     Route::get('/admin/dashboard/nueva_ruta', [AdminDashboardController::class, 'newroute'])->name('admin.new.route');
-    Route::get('/admin/dashboard/rutas', [AdminDashboardController::class, 'routesview'])->name('admin.routes');
+    // Route::get('/admin/dashboard/rutas', [AdminDashboardController::class, 'routesview'])->name('admin.routes');
+    Route::get('/admin/dashboard/rutas', [AdminDashboardController::class, 'routesshow'])->name('admin.routes');
+    Route::post('admin/dashboard/nueva_ruta', [AdminDashboardController::class, 'routesstore'])->name('admin.route.store');
+    Route::get('/admin/dashboard/ruta/{idRuta}', [AdminDashboardController::class, 'routesshowdetails'])->name('admin.route.details');
 
 });
 
 // user
-Route::middleware('auth', 'role:user')->group(function () {
+Route::middleware(['auth', 'role:user'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('user.dashboard');
 
     //address
@@ -64,14 +67,13 @@ Route::middleware('auth', 'role:user')->group(function () {
     Route::put('/dashboard/pedidos/{order}', [UserDashboardController::class, 'orderupdate'])->name('user.order.update');
     Route::delete('/dashboard/pedidos/{order}', [UserDashboardController::class, 'orderdestroy'])->name('user.order.destroy');
 
-    
 
 });
 
 
 //driver
 Route::middleware('auth', 'role:driver')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('driver.dashboard');
+    // Route::get('/dashboard', [DashboardController::class, 'index'])->name('driver.dashboard');
 });
 
 
