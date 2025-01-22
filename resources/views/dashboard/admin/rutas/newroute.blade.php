@@ -14,7 +14,7 @@
             </div>
             <div>
                 <button type="button" 
-                    class="bg-flamingo-400 text-white dark:bg-flamingo-500 px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150"
+                    class="border border-flamingo-500 text-flamingo-500 hover:bg-flamingo-500 hover:text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150"
                     onclick="document.querySelector('#rutaForm').submit()">
                     Calcular Ruta Automática
                 </button>
@@ -43,7 +43,7 @@
             </div>
             <div class="flex mt-6">
                 <button type="submit" name="calcular_manual" 
-                    class="border border-flamingo-500 text-flamingo-500 hover:bg-flamingo-500 hover:text-white  px-4 py-2 rounded-md shadow-md hover:shadow-lg transform transition-all duration-150">
+                    class="bg-flamingo-400 text-white dark:bg-flamingo-500   px-4 py-2 rounded-md shadow-md hover:shadow-lg transform transition-all duration-150">
                     Calcular Ruta Manual
                 </button>
             </div>

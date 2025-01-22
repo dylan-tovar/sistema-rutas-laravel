@@ -9,12 +9,17 @@
             <!-- Logo o título -->
             <li>
                 <a href="#" 
-                   class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300">
+                   class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
+                   :class="{ 'px-1': !isAsideExpanded, 'px-2': isAsideExpanded }"
+                    >
+                    <svg id="logo-54" class="h-8 w-auto flex absolute" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 41" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M20.6841 40.138C31.7298 40.138 40.6841 31.1837 40.6841 20.138C40.6841 9.09234 31.7298 0.138031 20.6841 0.138031C9.63837 0.138031 0.684082 9.09234 0.684082 20.138C0.684082 31.1837 9.63837 40.138 20.6841 40.138ZM26.9234 9.45487C27.2271 8.37608 26.1802 7.73816 25.2241 8.41933L11.8772 17.9276C10.8403 18.6663 11.0034 20.138 12.1222 20.138L15.6368 20.138V20.1108H22.4866L16.9053 22.0801L14.4448 30.8212C14.1411 31.9 15.1879 32.5379 16.1441 31.8567L29.491 22.3485C30.5279 21.6098 30.3647 20.138 29.246 20.138L23.9162 20.138L26.9234 9.45487Z" class="ccustom" fill="#eb5b38"></path>
+                    </svg>
                     <span 
-                        class="font-bold text-lg text-flamingo-500 transition-opacity duration-300" 
+                        class="font-bold ml-10 text-lg text-flamingo-500 transition-opacity duration-300" 
                         :class="{ 'opacity-0': !isAsideExpanded, 'opacity-100': isAsideExpanded }"
                         >
-                        LOGO
+                        OptimizaRutas
                     </span>
                 </a>
             </li>
@@ -109,15 +114,15 @@
                             <a href="{{ route('admin.new.route') }}" class="block py-1 text-sm hover:underline">Crear una Ruta</a>
                         </li>
                         <li>
-                            <a href="{{ route('admin.routes')}}" class="block py-1 text-sm hover:underline">Rutas Activas</a>
+                            <a href="{{ route('admin.routes') }}" class="block py-1 text-sm hover:underline">Rutas Activas</a>
                         </li>
                         <li>
-                            <a href="#" class="block py-1 text-sm hover:underline">Historial de Rutas</a>
+                            <a href="{{ route('admin.routes.history') }}" class="block py-1 text-sm hover:underline">Historial de Rutas</a>
                         </li>
                     </ul>
                 </li>
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('admin.reports') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -131,7 +136,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('admin.profile.edit') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -235,12 +240,12 @@
                             <a href="{{ route('user.order')}}" class="block py-1 text-sm hover:underline">Crear una Pedido</a>
                         </li>
                         <li>
-                            <a href="{{ route('user.my.orders')}}" class="block py-1 text-sm hover:underline">Pedidos Activas</a>
+                            <a href="{{ route('user.my.orders')}}" class="block py-1 text-sm hover:underline">Pedidos Activos</a>
                         </li>
                     </ul>
                 </li>
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('user.orders.history') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -254,7 +259,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('user.profile.edit') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -270,7 +275,7 @@
             {{-- DRIVER CONTENT --}}
             @elseif (auth()->user()->hasRole('driver'))
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('driver.dashboard') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -323,7 +328,7 @@
                     </ul>
                 </li> --}}
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('driver.routes') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >
@@ -351,7 +356,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" 
+                    <a href="{{ route('driver.profile.edit') }}" 
                        class="flex items-center py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#333] transition-all duration-300"
                        :class="{ 'px-2': !isAsideExpanded, 'px-4' : isAsideExpanded }"
                        >

@@ -2,24 +2,81 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Address;
+use App\Models\Order;
 use App\Models\Role;
 use App\Models\Route;
 use App\Models\User;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+
+use function PHPSTORM_META\map;
 
 class AdminDashboardController extends Controller
 {
     public function index() {
-        return view('dashboard/index', [
+        $allDistance = DB::table('routes')->sum('distance');
+        $activeRoutes = DB::table('routes')->where('status', 'active')->count();
+        $completedRoutes = DB::table('routes')->where('status', 'complete')->count();
+        $orders = DB::table('orders')->select('id')->count();
+        $routes = Route::all();
+        $pendingOrders = DB::table('orders')->where('status', 'pending')->count();        
+        $lastOrders = DB::table('orders')->orderBy('created_at', 'desc')->take(5)->get();
+        $addresses = Address::all(['latitude', 'longitude']);
+
+
+
+         // Obtener la fecha de hace 7 días
+            $sevenDaysAgo = Carbon::now()->subDays(7);
+
+            // Obtener el número de órdenes creadas en los últimos 7 días
+            $ordersCount = Order::where('created_at', '>=', $sevenDaysAgo)
+                ->count(); // Contamos el total de órdenes creadas en los últimos 7 días
+
+            // Obtener el número de órdenes creadas por día en los últimos 7 días
+            $ordersByDay = [];
+            for ($i = 6; $i >= 0; $i--) {
+                $day = Carbon::now()->subDays($i);
+                $count = Order::whereDate('created_at', $day->toDateString())->count();
+                $ordersByDay[] = $count;
+            }
+
+
+             // Obtener los vehículos que están en uso o en mantenimiento
+            // $vehicles = Vehicle::whereIn('status', ['en uso', 'en mantenimiento'])
+            //     ->get();
+
+            $vehicles = DB::table('vehicles as v')
+                ->leftJoin('users as u', 'v.user_id', '=', 'u.id')
+                ->select('v.model', 'v.make', 'v.status', 'u.name')
+                ->whereIn('v.status', ['en uso', 'en mantenimiento'])
+                ->get();
+
+    
+        return view('dashboard/admin/index', [
             'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
                 ['name' => 'Inicio', 'url' => null], 
             ],
+            'metrics' => [
+                'allDistance' => $allDistance,
+                'activeRoutes' => $activeRoutes,
+                'completedRoutes' => $completedRoutes,
+                'pendingOrders' => $pendingOrders,
+            ],
+            'lastOrders' => $lastOrders,
+            'ordersCount' => $ordersCount,
+            'ordersByDay' => $ordersByDay,
+            'vehicles' => $vehicles,
+            'addresses' => $addresses,
         ]);
     }
+    
 
 
     /**
@@ -150,20 +207,20 @@ class AdminDashboardController extends Controller
     }
 
 
-    public function routesview() {
+    // public function routesview() {
 
-        //
-        // $rutaspendientes = DB::table('routes')
-        //     ->leftJoin()
+    //     //
+    //     // $rutaspendientes = DB::table('routes')
+    //     //     ->leftJoin()
 
 
-        return view('dashboard/admin/rutas/routelist', [
-            'breadcrumbs' => [
-                ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
-                ['name' => 'Rutas', 'url' => null],
-            ]
-        ]);
-    }
+    //     return view('dashboard/admin/rutas/routelist', [
+    //         'breadcrumbs' => [
+    //             ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+    //             ['name' => 'Rutas', 'url' => null],
+    //         ]
+    //     ]);
+    // }
 
 
     public function routesstore(Request $request) {
@@ -243,7 +300,7 @@ class AdminDashboardController extends Controller
     
         // Creación de ruta
         $idRuta = DB::table('routes')->insertGetId([
-            'status' => 'active',
+            'status' => 'por asignar',
             'distance' => $response['distancia_total'] ?? 0,
             'created_at' => now(),
             'updated_at' => now(),
@@ -263,6 +320,15 @@ class AdminDashboardController extends Controller
                     ]);
                 }
             }
+
+            // actualiza las orders a "en ruta"
+            DB::table('orders')
+                ->whereIn('id', $idsPedidos)
+                ->update([
+                    'status' => 'en ruta',
+                    'updated_at' => now(),
+                ]);
+
         } else {
             return back()->withErrors(['error' => 'La respuesta de la API no contiene rutas válidas.']);
         }
@@ -275,35 +341,72 @@ class AdminDashboardController extends Controller
 
     // Mostrar todas las rutas o los detalles de una ruta específica
     public function routesshow() {
-        
-
-            // Cargar todas las rutas activas
-            $routes = Route::with('driver')->where('status', 'active')->get();
-
-            return view('dashboard/admin/rutas/routelist', [
-                'routes' => $routes,
-                'breadcrumbs' => [
-                    ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
-                    ['name' => 'Rutas', 'url' => null],
-                ],
-            ]);
+        $routes = Route::with('driver')->whereIn('status', ['por asignar', 'active'])->get();
+        // dd($routes); // Esto debería mostrarte las rutas que estás obteniendo.
+        return view('dashboard/admin/rutas/routelist', [
+            'routes' => $routes,
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+                ['name' => 'Rutas', 'url' => null],
+            ],
+        ]);
     }
+    
     
 
     public function routesshowdetails ($idRuta) {
 
-        $route = Route::with(['driver', 'orders'])->find($idRuta);
+
+        // mysql> select u.id, u.name, u.email, r.name as role from users u join role_user ru on u.id = ru.user_id join roles r on ru.role_id = r.id left join vehicles v on u.id = v.user_id where r.id = 3 and v.id is null;
+        $drivers = DB::table('users as u')
+            ->join('role_user as ru', 'u.id', '=', 'ru.user_id')
+            ->join('roles as r', 'ru.role_id', '=', 'r.id')
+            ->leftJoin('vehicles as v', 'u.id', '=', 'v.user_id')
+            ->where('r.id', 3)
+            ->whereNull('v.id')
+            ->select('u.id', 'u.name', 'u.email', 'r.name as role')
+            ->get();
+
+        $vehicles = DB::table('vehicles')
+            ->where('status', 'disponible')
+            ->whereNull('user_id')
+            ->select('id', 'make', 'model', 'status', 'user_id')
+            ->get();
+        
+
+        
+        $route = DB::table('routes')
+            ->select('routes.*')
+            ->where('routes.id', $idRuta)
+            ->first();
 
         if (!$route) {
             return redirect()->route('admin.routes')->withErrors('Ruta no encontrada');
         }
-    
-        // Recuperar las paradas (pedidos) asociadas con la ruta
-        $stops = $route->orders;
-    
+
+        
+        $stops = DB::table('route_orders')
+            ->join('orders', 'route_orders.order_id', '=', 'orders.id')
+            ->join('addresses', 'orders.address_id', '=', 'addresses.id')
+            ->join('users', 'addresses.user_id', '=', 'users.id' )
+            ->select(
+                'orders.id as order_id',
+                'orders.description',
+                'addresses.latitude',
+                'addresses.longitude',
+                'addresses.address_name',
+                'addresses.address',
+                'users.email',
+                'users.name',
+            )
+            ->where('route_orders.route_id', $idRuta)
+            ->get();
+            
         return view('dashboard/admin/rutas/details', [
             'route' => $route,
             'stops' => $stops,
+            'drivers' => $drivers,
+            'vehicles' => $vehicles,
             'breadcrumbs' => [
                 ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
                 ['name' => 'Rutas', 'url' => '/admin/dashboard/rutas'],
@@ -312,7 +415,226 @@ class AdminDashboardController extends Controller
         ]);
     }
 
+    public function routeassign(Request $request, $id)
+    {
 
+        $request->validate([
+            'driver_id' => 'required|exists:users,id',
+            'vehicle_id' => 'required|exists:vehicles,id',
+        ]);
+    
+        $route = Route::findOrFail($id);
+        $vehicle = Vehicle::findOrFail($request->vehicle_id);
+    
+        // Verifica que el vehículo no esté asignado
+        if ($vehicle->user_id) {
+            return back()->with('error', 'El vehículo ya está asignado.');
+        }
+    
+        // Asigna el conductor y el vehículo a la ruta
+        $route->driver_id = $request->driver_id;
+        $route->vehicle_id = $request->vehicle_id;
+        $route->status = 'active';
+        $route->save();
+    
+        // Marca el vehículo como asignado
+        $vehicle->user_id = $request->driver_id;
+        $vehicle->status = 'en uso';
+        $vehicle->save();
+    
+        return redirect()->route('admin.route.details', $id)->with('success', 'Repartidor y vehículo asignados exitosamente.');
+    }
+
+
+    public function routecancel ($id) {
+        $route = Route::findOrFail($id);
+
+        $route->status = 'cancelada';
+        $route->save();
+
+        return redirect()->route('admin.routes')->with('success', 'La ruta se ha eliminado');
+    }
+    
+
+    public function routeshistory () {
+        $routes = Route::with('driver')->get();
+
+        return view('dashboard/admin/rutas/routehistory', [
+            'routes' => $routes,
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+                ['name' => 'Historial de Rutas', 'url' => null],
+            ],
+        ]);
+    }
+
+
+    /**
+     * REPORTES
+     */
+
+
+     public function reportsindex () {
+
+        $routes = Route::all();
+
+        return view('dashboard/admin/reportes/index', [
+            'routes' => $routes,
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => '/admin/dashboard'],
+                ['name' => 'Reportes', 'url' => null],
+            ]
+            ]);
+     }
+
+     public function reportvehicle() {
+
+        $vehicles = Vehicle::all();
+
+        $title = 'Reporte de Vehiculos';
+        $date = date('d/m/Y');
+
+        $pdf = Pdf::loadview('dashboard/admin/reportes/reporte-vehiculo', compact('title', 'date', 'vehicles'));
+
+        return $pdf->stream();
+
+     }
+
+
+     public function reportgeneral () {
+
+        $allDistance = DB::table('routes')->sum('distance');
+        $activeRoutes = DB::table('routes')->where('status', 'active')->count();
+        $completedRoutes = DB::table('routes')->where('status', 'complete')->count();
+        $orders = DB::table('orders')->select('id')->count();
+        $routes = Route::all();
+        
+
+        $title = 'Reporte General';
+        $date = date('d/m/Y');
+
+        $pdf = Pdf::loadview('dashboard/admin/reportes/reporte-general', compact('title', 'date', 'allDistance', 'activeRoutes', 'completedRoutes', 'orders', 'routes'));
+    
+            return $pdf->stream();
+     }
+
+     public function reportdrivers () {
+
+        // mysql> select u.name, u.email from users as u join role_user as ru on u.id = ru.user_id where ru.role_id = 3;
+        // despues puedo agregar consultas mas complejas
+        $drivers = DB::table('users as u')
+            ->join('role_user as ru', 'u.id', '=', 'ru.role_id')
+            ->where('ru.role_id', 3)
+            ->select('u.id', 'u.name', 'u.email')
+            ->get();
+
+            $title = 'Reporte de Conductores';
+            $date = date('d/m/Y');
+    
+            $pdf = Pdf::loadview('dashboard/admin/reportes/reporte-conductor', compact('title', 'date', 'drivers'));
+    
+            return $pdf->stream();
+     }
+
+     public function reportroute ($idRuta) {
+
+         // Obtener la información de la ruta
+    $route = DB::table('routes')
+    ->select('routes.*')
+    ->where('routes.id', $idRuta)
+    ->first();
+
+if (!$route) {
+    return redirect()->route('admin.routes')->withErrors('Ruta no encontrada');
+}
+
+// Obtener las paradas (pedidos) asociadas a la ruta
+$stops = DB::table('route_orders')
+    ->join('orders', 'route_orders.order_id', '=', 'orders.id')
+    ->join('addresses', 'orders.address_id', '=', 'addresses.id')
+    ->join('users', 'addresses.user_id', '=', 'users.id')
+    ->select(
+        'orders.id as order_id',
+        'orders.description',
+        'addresses.latitude',
+        'addresses.longitude',
+        'addresses.address_name',
+        'addresses.address',
+        'users.email as user_email',
+        'users.name as user_name'
+    )
+    ->where('route_orders.route_id', $idRuta)
+    ->get();
+
+// Información del conductor asignado a la ruta (si aplica)
+$driver = DB::table('users')
+    ->join('routes', 'users.id', '=', 'routes.driver_id')
+    ->select('users.id', 'users.name', 'users.email')
+    ->where('routes.id', $idRuta)
+    ->first();
+
+// Información del vehículo asignado a la ruta (si aplica)
+$vehicle = DB::table('vehicles')
+    ->join('routes', 'vehicles.id', '=', 'routes.vehicle_id')
+    ->select('vehicles.id', 'vehicles.make', 'vehicles.model', 'vehicles.status')
+    ->where('routes.id', $idRuta)
+    ->first();
+
+// Datos del reporte
+$title = 'Reporte de Ruta ' . $idRuta;
+$date = date('d/m/Y');
+
+// Generar PDF
+$pdf = Pdf::loadview('dashboard/admin/reportes/reporte-ruta', compact('title', 'date', 'route', 'stops', 'driver', 'vehicle'));
+
+// Retornar el PDF al navegador
+return $pdf->stream('reporte-ruta-' . $idRuta . '.pdf');
+
+     }
+
+
+
+
+
+     /**
+     * config edit perfil
+     */
+
+     public function settings() {
+        $user = Auth::user();
+
+        return view('dashboard/settings', [
+            'user' => $user,
+            'breadcrumbs' => [
+                ['name' => 'Dashboard', 'url' => '/dashboard'],
+                ['name' => 'Editar Perfil', 'url' => null],
+            ]
+        ]);
+     }
+
+     public function updateprofile (Request $request) {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . Auth::id(),
+            'password' => 'nullable|string|min:8|confirmed', // solo requerido si se desea cambiar
+        ]);
+    
+        // Obtiene el usuario autenticado
+        $user = Auth::user();
+    
+        // Actualiza el nombre y el email
+        $user->name = $request->name;
+        $user->email = $request->email;
+    
+        // Si la contraseña está presente, actualízala
+        if ($request->password) {
+            $user->password = bcrypt($request->password);
+        }
+    
+        $user->save();
+    
+        return redirect()->route('admin.profile.edit')->with('success', 'Perfil actualizado correctamente.');
+     }
 }
 
 

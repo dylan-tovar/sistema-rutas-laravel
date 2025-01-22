@@ -10,10 +10,18 @@
 </head>
 <body class="transition-all duration-500 ease-in-out bg-white text-pTxt dark:bg-bgDark dark:text-pTxtDark">
     <header class="fixed top-0 left-0 w-full mx-auto flex justify-between shadow dark:shadow-pTxt items-center py-3 px-24 bg-white dark:bg-bgDark z-50 ">
-        <a href="/" class="text-2xl font-bold ">
-            <img src="" alt="" class="h-8 inline-block mr-2 ">
-            OptimizaRutas
+        <a href="/" class="text-2xl font-bold flex items-center">
+            <!-- SVG Logo -->
+            <svg id="logo-54" class="h-8 w-auto flex absolute" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 41" fill="none">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M20.6841 40.138C31.7298 40.138 40.6841 31.1837 40.6841 20.138C40.6841 9.09234 31.7298 0.138031 20.6841 0.138031C9.63837 0.138031 0.684082 9.09234 0.684082 20.138C0.684082 31.1837 9.63837 40.138 20.6841 40.138ZM26.9234 9.45487C27.2271 8.37608 26.1802 7.73816 25.2241 8.41933L11.8772 17.9276C10.8403 18.6663 11.0034 20.138 12.1222 20.138L15.6368 20.138V20.1108H22.4866L16.9053 22.0801L14.4448 30.8212C14.1411 31.9 15.1879 32.5379 16.1441 31.8567L29.491 22.3485C30.5279 21.6098 30.3647 20.138 29.246 20.138L23.9162 20.138L26.9234 9.45487Z" class="ccustom" fill="#eb5b38"></path>
+            </svg>
+        
+            <!-- Text -->
+            <span class="ml-11">OptimizaRutas</span>
         </a>
+        
+        
+        
         <nav class="flex space-x-4 items-center">
             <x-dark-mode-toggle />
             <a href="#como-funciona" class="text-sm text-sText dark:text-sTextDark dark:hover:text-flamingo-500 hover:text-flamingo-400">¿Cómo funciona?</a>

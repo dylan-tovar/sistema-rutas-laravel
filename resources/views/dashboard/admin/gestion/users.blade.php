@@ -1,12 +1,11 @@
-<!-- resources/views/home.blade.php -->
 @extends('layouts.AppLayout')
 
 @section('title', 'Gestión de Roles')
 
 @section('content')
-    <div class="container mx-auto px-4">
-        <!-- Tarjeta Principal -->
-        <div class="bg-[#FAFAFA] border border-gray-200 dark:border-pTxt dark:bg-[#18181a] shadow-inner dark:shadow-[#222222] rounded-xl p-6">
+    <div class="container mx-auto px-4 h-screen overflow-hidden">
+        <!-- Tarjeta Principal con scroll interno -->
+        <div class="bg-[#FAFAFA] border border-gray-200 dark:border-pTxt dark:bg-[#18181a] shadow-inner dark:shadow-[#222222] rounded-xl p-6 max-h-[83%] overflow-y-auto scrollbar-custom">
             <div class="border-b dark:border-sText border-sTextDark pb-4 mb-6">
                 <h1 class="text-3xl font-bold">Gestión de Roles</h1>
                 <p class="mt-1 text-sm text-sText dark:text-sTextDark">Aquí puedes ver y gestionar la lista de usuarios registrados en el sistema.</p>
@@ -31,7 +30,6 @@
 
 
             <!-- Tabla de usuarios -->
-            <div class="overflow-x-auto">
                 <table class="w-full border-collapse overflow-hidden bg-[#FAFAFA] dark:bg-[#18181a] shadow-sm rounded-lg">
                     <thead class="bg-accent dark:bg-pTxt text-gray-700 dark:text-gray-300">
                         <tr class="text-sm font-semibold">
@@ -78,7 +76,9 @@
                         @endforeach
                     </tbody>
                 </table>
-            </div>
+
+            
+            
         </div>
     </div>
 @endsection

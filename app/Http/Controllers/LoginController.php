@@ -30,7 +30,14 @@ class LoginController extends Controller
             $user = Auth::user();
             if ($user->roles->contains('name', 'admin')) {
                 return redirect()->intended('admin/dashboard')->with('success', '¡Inicio de sesión exitoso!');
+            } 
+
+            if ($user->roles->contains('name', 'driver')) {
+                return redirect()->intended('repartidor/dashboard')->with('success', '¡Inicio de sesión exitoso!');
             }
+
+            
+            
 
             return redirect()->intended('dashboard')->with('success', '¡Inicio de sesión exitoso!');
         }

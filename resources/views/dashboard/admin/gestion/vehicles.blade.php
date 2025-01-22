@@ -34,7 +34,7 @@
             <div>
                 <!-- Botón para agregar -->
                 <button 
-                    class="border border-flamingo-500 text-flamingo-500 dark:border-flamingo-600 dark:text-flamingo-600 hover:bg-flamingo-400 hover:text-white hover:dark:bg-flamingo-600 hover:dark:text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150"
+                    class="border border-flamingo-500 text-flamingo-500 hover:bg-flamingo-500 hover:text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150"
                     @click="openAddModal()">
                     Agregar Vehículo
                 </button>
@@ -89,71 +89,71 @@
     </div>
 
     <!-- Modal -->
-<div 
-class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-x-show="modalOpen"
-@click.away="closeModal()">
-<div class="bg-white dark:bg-[#18181a] p-6 rounded-lg shadow-lg w-full max-w-lg">
-    <div class="flex justify-between items-center border-b dark:border-sText border-sTextDark pb-4 mb-6 relative">
-        <h2 class="text-2xl font-bold" x-text="modalForm.method === 'POST' ? 'Agregar Vehículo' : 'Editar Vehículo'"></h2>
-        <button 
-            class="absolute top-0 right-0 p-2 "
-            @click="closeModal()">
-            <i class="material-icons">close</i>
-        </button>
+    <div 
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    x-show="modalOpen"
+    @click.away="closeModal()">
+        <div class="bg-white dark:bg-[#18181a] p-6 rounded-lg shadow-lg w-full max-w-lg">
+            <div class="flex justify-between items-center border-b dark:border-sText border-sTextDark pb-4 mb-6 relative">
+                <h2 class="text-2xl font-bold" x-text="modalForm.method === 'POST' ? 'Agregar Vehículo' : 'Editar Vehículo'"></h2>
+                <button 
+                    class="absolute top-0 right-0 p-2 "
+                    @click="closeModal()">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <form method="POST" :action="modalForm.action">
+                @csrf
+                
+                <template x-if="modalForm.method === 'PUT'">
+                    <input type="hidden" name="_method" value="PUT">
+                </template>
+            
+                <!-- Campos del formulario -->
+                <div class="mb-4">
+                    <label class="block text-sm text-sText dark:text-sTextDark mb-2">Marca</label>
+                    <input type="text" name="make" x-model="modalForm.make" required
+                        class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm text-sText dark:text-sTextDark mb-2">Modelo</label>
+                    <input type="text" name="model" x-model="modalForm.model" required
+                        class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm text-sText dark:text-sTextDark mb-2">Año</label>
+                    <input type="number" name="year" x-model="modalForm.year" required
+                        class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm text-sText dark:text-sTextDark mb-2">Estado</label>
+                    <select name="status" x-model="modalForm.status" required
+                        class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
+                        <option value="disponible">Disponible</option>
+                        <option value="en uso">En uso</option>
+                        <option value="en mantenimiento">En mantenimiento</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm text-sText dark:text-sTextDark mb-2">Usuario (Solo "Drivers")</label>
+                    <select name="user_id" x-model="modalForm.user_id"
+                        class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
+                        <option value="">Ninguno</option>
+                        @foreach($drivers as $driver)
+                            <option value="{{ $driver->id }}">{{ $driver->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            
+                <!-- Botón de guardar -->
+                <button 
+                    type="submit" 
+                    class="w-full mt-4 bg-flamingo-400 dark:bg-flamingo-600 text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150">
+                    Guardar Cambios
+                </button>
+            </form>
+        </div>
     </div>
-    <form method="POST" action="{{ route('admin.vehicles.update', $vehicle->id) }}">
-        @csrf
-        
-        <template x-if="modalForm.method === 'PUT'">
-            <input type="hidden" name="_method" value="PUT">
-        </template>
-
-        <!-- Campos del formulario -->
-        <div class="mb-4">
-            <label class="block text-sm text-sText dark:text-sTextDark mb-2">Marca</label>
-            <input type="text" name="make" x-model="modalForm.make" required
-                class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm text-sText dark:text-sTextDark mb-2">Modelo</label>
-            <input type="text" name="model" x-model="modalForm.model" required
-                class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm text-sText dark:text-sTextDark mb-2">Año</label>
-            <input type="number" name="year" x-model="modalForm.year" required
-                class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm text-sText dark:text-sTextDark mb-2">Estado</label>
-            <select name="status" x-model="modalForm.status" required
-                class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
-                <option value="disponible">Disponible</option>
-                <option value="en uso">En uso</option>
-                <option value="en mantenimiento">En mantenimiento</option>
-            </select>
-        </div>
-        <div class="mb-4">
-            <label class="block text-sm text-sText dark:text-sTextDark mb-2">Usuario (Solo "Drivers")</label>
-            <select name="user_id" x-model="modalForm.user_id"
-                class="w-full border border-accent dark:bg-[#222222] dark:border-sText rounded-md p-2 focus:ring-2 focus:ring-orange-400 text-gray-700 dark:text-gray-300">
-                <option value="">Ninguno</option>
-                @foreach($drivers as $driver)
-                    <option value="{{ $driver->id }}">{{ $driver->name }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <!-- Botón de guardar -->
-        <button 
-            type="submit" 
-            class="w-full mt-4 bg-flamingo-400 dark:bg-flamingo-600 text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150">
-            Guardar Cambios
-        </button>
-    </form>
-</div>
-</div>
 
 </div>
 
@@ -187,7 +187,7 @@ x-show="modalOpen"
             openEditModal(vehicle) {
                 this.modalOpen = true;
                 this.modalForm = {
-                    action: "{{ url('admin.vehicles') }}/" + vehicle.id,
+                    action: "{{ url('admin/dashboard/gestion/vehiculos') }}/" + vehicle.id,
                     method: 'PUT',
                     make: vehicle.make,
                     model: vehicle.model,

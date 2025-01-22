@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
@@ -33,10 +34,15 @@ class RegisterController extends Controller
             'password' => Hash::make($validated['password'])
         ]);
 
+        DB::table('role_user')->insert([
+            'user_id' => $user->id,
+            'role_id' => 2,
+        ]);
+
         // return redirect()-> route ('login');
         Auth::login($user);
 
-        return redirect()->route('dashboard')->with('success', '¡Registro exitoso! Bienvenido.');
+        return redirect()->route('user.dashboard')->with('success', '¡Registro exitoso! Bienvenido.');
         
     }
 }

@@ -22,7 +22,7 @@
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     @stack('head')
 </head>
-<body class="flex h-screen bg-[#FAFAFA] text-pTxt dark:bg-[#18181a] dark:text-pTxtDark transition-all duration-800 ease-in-out p-4 pl-0" x-data="{ isAsideExpanded: true }">
+<body class="flex h-screen overflow-hidden bg-[#FAFAFA] text-pTxt dark:bg-[#18181a] dark:text-pTxtDark transition-all duration-800 ease-in-out p-4 pl-0" x-data="{ isAsideExpanded: true }">
 
     <!-- Contenedor principal -->
     <div class="flex h-full w-full">
@@ -57,9 +57,9 @@
                 <div>
                     @if(isset($breadcrumbs))
                         <nav class="flex items-center space-x-1 text-sm" aria-label="Breadcrumb">
-                            <ol class="flex items-center">
+                            <ol class="flex flex-wrap items-center">
                                 @foreach ($breadcrumbs as $breadcrumb)
-                                    <li>
+                                    <li class="whitespace-nowrap">
                                         @if ($breadcrumb['url'])
                                             <a href="{{ $breadcrumb['url'] }}" class="dark:text-flamingo-500 text-flamingo-400 hover:underline">
                                                 {{ $breadcrumb['name'] }}
@@ -71,7 +71,7 @@
                                         @endif
                                     </li>
                                     @if (!$loop->last)
-                                        <li>
+                                        <li class="whitespace-nowrap">
                                             <span class="mx-2 dark:text-gray-400">/</span>
                                         </li>
                                     @endif
@@ -83,7 +83,7 @@
             </div>
         
             <!-- Rol del usuario -->
-            <div>
+            {{-- <div>
                 @if (auth()->user()->hasRole('admin'))
                     <p class="text-white">Bienvenido, Administrador</p>
                 @elseif (auth()->user()->hasRole('user'))
@@ -91,7 +91,7 @@
                 @elseif (auth()->user()->hasRole('driver'))
                     <p class="text-white">Bienvenido, Conductor</p>
                 @endif
-            </div>
+            </div> --}}
         
             <!-- Botón de modo oscuro -->
             <x-dark-mode-toggle />

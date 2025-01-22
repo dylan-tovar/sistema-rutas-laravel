@@ -22,7 +22,7 @@
 @endif
 
 
-    <div class="bg-[#FAFAFA] border border-gray-200 dark:border-pTxt dark:bg-[#18181a] shadow-inner dark:shadow-[#222222] rounded-xl p-6">
+    <div class="bg-[#FAFAFA] border border-gray-200 dark:border-pTxt dark:bg-[#18181a] shadow-inner dark:shadow-[#222222] rounded-xl p-6 max-h-[83%] overflow-y-auto scrollbar-custom">
 
         <div class="flex items-center border-b dark:border-sText border-sTextDark pb-4 mb-6">
             <div>
@@ -104,6 +104,8 @@
         document.getElementById('longitude').value = lngLat.lng;
     });
 
+
+    
     // Configurar autocompletado con Mapbox Geocoding API
     const autocompleteInput = document.getElementById('autocomplete_address');
     const resultsContainer = document.getElementById('autocomplete-results');
@@ -144,7 +146,8 @@
         } else {
             resultsContainer.classList.add('hidden');
         }
-    });
+    }); 
+    
 
     // Ocultar sugerencias al hacer clic fuera
     document.addEventListener('click', (e) => {
