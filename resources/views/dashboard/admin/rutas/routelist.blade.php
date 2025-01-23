@@ -41,7 +41,7 @@
                             <td class="p-4">{{ $route->status }}</td>
                             <td class="p-4 flex items-center space-x-4">
                                 <a href="{{ route('admin.route.details', ['idRuta' => $route->id]) }}" 
-                                   class="bg-flamingo-400 dark:bg-flamingo-500 text-white px-4 py-2 rounded-md shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150">
+                                   class="bg-flamingo-400 dark:bg-flamingo-500 text-white px-4 py-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-150">
                                     Ver detalles
                                 </a>
                                 <form action="{{ route('admin.route.cancel', $route->id) }}" method="POST" class="inline">

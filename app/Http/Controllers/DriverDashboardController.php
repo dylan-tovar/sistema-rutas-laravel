@@ -11,15 +11,63 @@ use Illuminate\Support\Facades\DB;
 class DriverDashboardController extends Controller
 {
     //
+    
 
-    public function index() {
-        return view('dashboard/index', [
-            'breadcrumbs' => [
-                ['name' => 'Dashboard', 'url' => '/repartidor/dashboard'],
-                ['name' => 'Inicio', 'url' => null], 
-            ],
-        ]);
-    }
+    public function index()
+{
+    $driverId = Auth::id();
+
+    // Métricas
+    $assignedRoutes = DB::table('routes')
+        ->where('driver_id', $driverId)
+        ->count();
+
+    $completedRoutes = DB::table('routes')
+        ->where('driver_id', $driverId)
+        ->where('status', 'completed')
+        ->count();
+
+    $activeRoutes = DB::table('routes')
+        ->where('driver_id', $driverId)
+        ->where('status', 'active')
+        ->count();
+
+    $totalDistance = DB::table('routes')
+        ->where('driver_id', $driverId)
+        ->sum('distance');
+
+    // Últimas rutas asignadas
+    $lastRoutes = DB::table('routes')
+        ->where('driver_id', $driverId)
+        ->orderBy('created_at', 'desc')
+        ->take(5)
+        ->get();
+
+    // Pedidos relacionados con las rutas activas
+    $activeOrders = DB::table('orders')
+        ->join('route_orders', 'orders.id', '=', 'route_orders.order_id')
+        ->join('routes', 'route_orders.route_id', '=', 'routes.id')
+        ->where('routes.driver_id', $driverId)
+        ->where('routes.status', 'active')
+        ->select('orders.id', 'orders.status', 'orders.created_at')
+        ->get();
+
+    return view('dashboard/driver/index', [
+        'breadcrumbs' => [
+            ['name' => 'Dashboard', 'url' => '/repartidor/dashboard'],
+            ['name' => 'Inicio', 'url' => null],
+        ],
+        'metrics' => [
+            'assignedRoutes' => $assignedRoutes,
+            'completedRoutes' => $completedRoutes,
+            'activeRoutes' => $activeRoutes,
+            'totalDistance' => $totalDistance,
+        ],
+        'lastRoutes' => $lastRoutes,
+        'activeOrders' => $activeOrders,
+    ]);
+}
+
 
 
 

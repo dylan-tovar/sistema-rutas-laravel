@@ -21,7 +21,7 @@
     <div class="bg-[#FAFAFA] border border-gray-200 dark:border-pTxt dark:bg-[#18181a] shadow-inner dark:shadow-[#222222] rounded-xl p-6 space-y-8 max-h-[83%] overflow-y-auto scrollbar-custom">
         <!-- Encabezado del Dashboard -->
         <div class="border-b dark:border-sText border-sTextDark pb-4 mb-6">
-            <h1 class="text-3xl font-bold">Dashboard</h1>
+            <h1 class="text-3xl font-bold">Panel de Administración</h1>
             <p class="mt-1 text-sm text-sText dark:text-sTextDark">Bienvenido de nuevo, {{Auth::user()->name}}</p>
         </div>
 
