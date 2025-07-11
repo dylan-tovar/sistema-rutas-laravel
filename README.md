@@ -103,5 +103,5 @@ Visualiza el recorrido completo en el mapa, las paradas de entrega y los datos d
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más información.
+Este proyecto está bajo la Licencia GNU General Public License v3.0. Consulta el archivo [LICENSE](LICENSE) para más información.
 
